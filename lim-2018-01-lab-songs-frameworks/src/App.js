@@ -1,15 +1,17 @@
 import React, { Component } from 'react';
 import './App.css';
+// import Example from './components/Example';
 import Artist from './components/Artist';
-import Songs from './components/Songs';
-import { Button } from 'reactstrap';
+// import Songs from './components/Songs';
+
+// import { Button } from 'reactstrap';
 
 class App extends Component {
   constructor() {
     super()
     this.state = {
-      data: null,
-      currentIndex: 0
+      data: [],
+      currentIndex: 39
     }
   }
 
@@ -22,45 +24,73 @@ class App extends Component {
           return fetch(`http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist=${elem.name}&api_key=5c8e2c09c2a2396e6d24a126d15464fc&format=json`)
             .then(response => response.json())
         })
-        ).then(values=>{
+        ).then(values => {
           const dataLabSongs = values.map((elem, i) => {
             return {
-              artist : result.artists.artist[i].name,
-              image : result.artists.artist[i].image[2]['#text'],
-              songs : elem.toptracks.track.filter(elemSong=>elemSong['@attr'].rank <= 10).map(elemSong=>elemSong.name),
-              like : 0
+              artist: result.artists.artist[i].name,
+              image: result.artists.artist[i].image[4]['#text'],
+              songs: elem.toptracks.track
+                .filter(elemSong => elemSong['@attr'].rank <= 10)
+                .map(elemSong => { return {name: elemSong.name, like : 0} }),
             }
           })
-        console.log(dataLabSongs);
-        this.setState({
-          data: dataLabSongs
-        })
+          this.setState({
+            data: dataLabSongs
+          })
+          
         }
         )
-        
-
-        // let objArtist = {}
-        // result.similartracks.track.forEach(elem => {
-        //   if(!objArtist.hasOwnProperty(elem.artist.name)){
-        //     objArtist[elem.artist.name] = {
-        //       artist: elem.artist.name,
-        //       image : elem.image[2]['#text'],
-        //       songs : [elem.name]
-        //     }
-        //   }
-        //   else{
-        //     objArtist[elem.artist.name].songs.push(elem.name)
-        //   }
-        // });
-        // const dataSongs = Object.values(objArtist)
       })
   }
+
+  handleNext(){
+    this.setState({
+      currentIndex : this.state.currentIndex + 1
+    })
+  }
+  handlePrevious(){
+    this.setState({
+      currentIndex : this.state.currentIndex - 1
+    })
+  }
+  handleUnlike(){
+    const {data, currentIndex} = this.state
+    data[currentIndex].songs.like  -= 1
+    this.setState({
+      data
+    })
+  }
+  handleLike(){
+    const {data, currentIndex} = this.state
+    data[currentIndex].songs.like  += 1
+    this.setState({
+      data
+    })
+  }
   render() {
+    const appStyle = {
+      margin:'auto',
+      width: '50%',
+      
+    }
+    const {data, currentIndex} = this.state
+    const a = data.map((elm,i)=> 
+    <div key = {i} style={appStyle}>
+    <Artist 
+    data={elm} 
+    onNext={this.handleNext.bind(this)} 
+    onPrevious={this.handlePrevious.bind(this)}
+    onUnlike={this.handleUnlike.bind(this)} 
+    onLike={this.handleLike.bind(this)} 
+    />  
+    <div>
+    </div>
+    </div>
+    )[currentIndex]
+
     return (
-      <div className="App">
-        <Artist />
-        <Songs />
-        <Button color="danger">Danger!</Button>
+      <div >
+        {a}
       </div>
     );
   }
